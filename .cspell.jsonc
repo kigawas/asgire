@@ -1,8 +1,11 @@
 {
-    "words": [
-        "asgire",
-        "asgiref",
-        "asyncio",
-        "testpaths"
-    ]
+  "words": [
+    "asgire",
+    "asgiref",
+    "asyncio",
+    "buildapi",
+    "isort",
+    "pytest",
+    "testpaths"
+  ]
 }
