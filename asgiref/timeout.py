@@ -9,8 +9,11 @@
 import asyncio
 import warnings
 from types import TracebackType
-from typing import Any  # noqa
-from typing import Optional, Type
+from typing import (
+    Any,  # noqa
+    Optional,
+    Type,
+)
 
 
 class timeout:
@@ -38,9 +41,7 @@ class timeout:
         if loop is None:
             loop = asyncio.get_running_loop()
         else:
-            warnings.warn(
-                """The loop argument to timeout() is deprecated.""", DeprecationWarning
-            )
+            warnings.warn("""The loop argument to timeout() is deprecated.""", DeprecationWarning)
         self._loop = loop
         self._task = None  # type: Optional[asyncio.Task[Any]]
         self._cancelled = False
@@ -89,9 +90,7 @@ class timeout:
 
         self._task = asyncio.current_task(self._loop)
         if self._task is None:
-            raise RuntimeError(
-                "Timeout context manager should be used " "inside a task"
-            )
+            raise RuntimeError("Timeout context manager should be used inside a task")
 
         if self._timeout <= 0:
             self._loop.call_soon(self._cancel_task)

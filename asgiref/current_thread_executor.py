@@ -67,9 +67,7 @@ class CurrentThreadExecutor(Executor):
         """
         # Check we're in the right thread
         if threading.current_thread() != self._work_thread:
-            raise RuntimeError(
-                "You cannot run CurrentThreadExecutor from a different thread"
-            )
+            raise RuntimeError("You cannot run CurrentThreadExecutor from a different thread")
 
         def done(future: "Future[Any]") -> None:
             with self._work_ready:
@@ -99,9 +97,7 @@ class CurrentThreadExecutor(Executor):
     ) -> "Future[_R]":
         # Check they're not submitting from the same thread
         if threading.current_thread() == self._work_thread:
-            raise RuntimeError(
-                "You cannot submit onto CurrentThreadExecutor from its own thread"
-            )
+            raise RuntimeError("You cannot submit onto CurrentThreadExecutor from its own thread")
         f: "Future[_R]" = Future()
         work_item = _WorkItem(f, fn, *args, **kwargs)
 

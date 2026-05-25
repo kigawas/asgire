@@ -25,19 +25,19 @@ jobs:
       - run: uv python install ${{ matrix.python-version }}
       - run: uv run --python ${{ matrix.python-version }} pytest -v
 
-  # lint:
-  #   name: Lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: astral-sh/setup-uv@v6
-  #     - run: uv run ruff check .
-  #     - run: uv run ruff format --check .
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
 
-  # typecheck:
-  #   name: Type check
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: astral-sh/setup-uv@v6
-  #     - run: uv run ty check
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run ty check

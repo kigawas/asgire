@@ -20,9 +20,7 @@ class WsgiToAsgi:
         We return a new WsgiToAsgiInstance here with the WSGI app
         and the scope, ready to respond when it is __call__ed.
         """
-        await WsgiToAsgiInstance(self.wsgi_application, self.duplicate_header_limit)(
-            scope, receive, send
-        )
+        await WsgiToAsgiInstance(self.wsgi_application, self.duplicate_header_limit)(scope, receive, send)
 
 
 class WsgiToAsgiInstance:
@@ -100,13 +98,9 @@ class WsgiToAsgiInstance:
                 corrected_name = "HTTP_%s" % name.upper().replace("-", "_")
             # HTTPbis say only ASCII chars are allowed in headers, but we latin1 just in case
             value = value.decode("latin1")
-            if (
-                self.duplicate_header_limit
-                and len(_headers[corrected_name]) >= self.duplicate_header_limit
-            ):
+            if self.duplicate_header_limit and len(_headers[corrected_name]) >= self.duplicate_header_limit:
                 raise ValueError(
-                    f"Too many duplicate headers: {corrected_name} exceeds limit of"
-                    f"{self.duplicate_header_limit}"
+                    f"Too many duplicate headers: {corrected_name} exceeds limit of{self.duplicate_header_limit}"
                 )
             _headers[corrected_name].append(value)
         for name, values in _headers.items():
@@ -122,17 +116,12 @@ class WsgiToAsgiInstance:
             raise exc_info[1].with_traceback(exc_info[2])
         # Don't allow re-calling without exc_info
         if hasattr(self, "response_start") and exc_info is None:
-            raise ValueError(
-                "You cannot call start_response a second time without exc_info"
-            )
+            raise ValueError("You cannot call start_response a second time without exc_info")
         # Extract status code
         status_code, _ = status.split(" ", 1)
         status_code = int(status_code)
         # Extract headers
-        headers = [
-            (name.lower().encode("ascii"), value.encode("ascii"))
-            for name, value in response_headers
-        ]
+        headers = [(name.lower().encode("ascii"), value.encode("ascii")) for name, value in response_headers]
         # Extract content-length
         self.response_content_length = None
         for name, value in response_headers:
@@ -183,9 +172,7 @@ class WsgiToAsgiInstance:
                 bytes_allowed = self.response_content_length - bytes_sent
                 if len(output) > bytes_allowed:
                     output = output[:bytes_allowed]
-            self.sync_send(
-                {"type": "http.response.body", "body": output, "more_body": True}
-            )
+            self.sync_send({"type": "http.response.body", "body": output, "more_body": True})
             bytes_sent += len(output)
             # The server should stop iterating over the response when enough data has been sent
             if bytes_sent == self.response_content_length:

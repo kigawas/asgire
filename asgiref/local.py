@@ -9,9 +9,7 @@ class _CVar:
     """Storage utility for Local."""
 
     def __init__(self) -> None:
-        self._data: "contextvars.ContextVar[Dict[str, Any]]" = contextvars.ContextVar(
-            "asgiref.local"
-        )
+        self._data: "contextvars.ContextVar[Dict[str, Any]]" = contextvars.ContextVar("asgiref.local")
 
     def __getattr__(self, key):
         storage_object = self._data.get({})
