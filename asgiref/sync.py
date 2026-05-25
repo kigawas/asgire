@@ -194,7 +194,7 @@ class AsyncToSync(Generic[_P, _R]):
             warnings.warn("async_to_sync was passed a non-async-marked callable", stacklevel=2)
         self.awaitable = awaitable
         try:
-            self.__self__ = self.awaitable.__self__  # type: ignore[union-attr]
+            self.__self__ = self.awaitable.__self__  # ty: ignore[unresolved-attribute]
         except AttributeError:
             pass
         self.force_new_loop = force_new_loop
@@ -419,7 +419,7 @@ class SyncToAsync(Generic[_P, _R]):
         self.context = context
 
         self._thread_sensitive = thread_sensitive
-        markcoroutinefunction(self)
+        markcoroutinefunction(self)  # ty: ignore[invalid-argument-type]
         if thread_sensitive and executor is not None:
             raise TypeError("executor must not be set when thread_sensitive is True")
         self._executor = executor

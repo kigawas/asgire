@@ -2,4 +2,5 @@
 
 ## 3.12.0
 
-- Initial release of asgiref.
+- Fix stopped loop deadlock: [asgiref#525](https://github.com/django/asgiref/issues/525)
+- Initial release

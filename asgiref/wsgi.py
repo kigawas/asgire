@@ -113,7 +113,7 @@ class WsgiToAsgiInstance:
         """
         # Don't allow re-calling once response has begun
         if self.response_started:
-            raise exc_info[1].with_traceback(exc_info[2])
+            raise exc_info[1].with_traceback(exc_info[2])  # ty: ignore[not-subscriptable]
         # Don't allow re-calling without exc_info
         if hasattr(self, "response_start") and exc_info is None:
             raise ValueError("You cannot call start_response a second time without exc_info")

@@ -51,7 +51,7 @@ class ApplicationCommunicator:
         Waits for the application to stop itself and returns any exceptions.
         """
         try:
-            async with async_timeout(timeout):
+            async with async_timeout(timeout):  # ty: ignore[invalid-context-manager]
                 try:
                     await self.future
                     self.future.result()
@@ -104,7 +104,7 @@ class ApplicationCommunicator:
             self.future.result()
         # Wait and receive the message
         try:
-            async with async_timeout(timeout):
+            async with async_timeout(timeout):  # ty: ignore[invalid-context-manager]
                 return await self.output_queue.get()
         except asyncio.TimeoutError as e:
             # See if we have another error to raise inside
