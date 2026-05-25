@@ -19,8 +19,6 @@ class ApplicationCommunicator:
         self._input_queue = None
         self._output_queue = None
 
-    # For Python 3.9 we need to lazily bind the queues, on 3.10+ they bind the
-    # event loop lazily.
     @property
     def input_queue(self):
         if self._input_queue is None:
