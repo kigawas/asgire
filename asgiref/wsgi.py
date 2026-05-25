@@ -2,7 +2,7 @@ import sys
 from collections import defaultdict
 from tempfile import SpooledTemporaryFile
 
-from asgiref.sync import AsyncToSync, sync_to_async
+from .sync import AsyncToSync, sync_to_async
 
 
 class WsgiToAsgi:
