@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.12.1
+
+- Remove Python 3.9 related code completely
+
 ## 3.12.0
 
 - Drop Python 3.9 support

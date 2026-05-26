@@ -17,20 +17,30 @@ Same license, same API, better code and maintenance.
 pip install asgire
 ```
 
-If migrating from the original:
+The import stays `import asgiref` — no code changes needed.
+
+## Migration
 
 ```bash
 pip uninstall asgiref
 pip install asgire
 ```
 
-The import stays `import asgiref` — no code changes needed.
+If you need to force Django or other libraries to depend on `asgire` instead of `asgiref` with `uv`, add the following to your `pyproject.toml`:
+
+```toml
+[tool.uv]
+override-dependencies = ["asgiref ; python_version == '0'"]
+```
+
+This will eliminate all transitive dependencies on `asgiref` in `uv.lock` to ensure `asgire` is the only `import asgiref` provider.
 
 ## Development
 
 ```bash
 uv sync
 uv run pytest -v
-uv run ruff check .
+uv run ruff check --fix
+uv run ruff format
 uv run ty check
 ```
