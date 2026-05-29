@@ -9,7 +9,7 @@
 
 The revamped and modernized drop-in replacement for [asgiref](https://pypi.org/project/asgiref/).
 
-Same license, same API, better code and maintenance.
+Same license, same API, but with **better code, comprehensive coverage, and active maintenance**.
 
 ## Installation
 

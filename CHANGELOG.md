@@ -3,6 +3,7 @@
 ## 3.12.1
 
 - Remove Python 3.9 related code completely
+- Fix WSGI thread contention bug
 
 ## 3.12.0
 
