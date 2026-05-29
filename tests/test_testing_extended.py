@@ -1,3 +1,4 @@
+# NEWLY ADDED
 import asyncio
 
 import pytest
@@ -27,6 +28,32 @@ async def test_wait_timeout_cancels_app():
     _ = instance.future
     await instance.wait(timeout=0.05)
     assert instance.future.done()
+
+
+@pytest.mark.asyncio
+async def test_wait_timeout_cancels_uncaught_app():
+    # App does NOT catch CancelledError, so wait()'s finally block must
+    # cancel and re-await it, swallowing the CancelledError.
+    async def app(scope, receive, send):
+        await asyncio.sleep(100)
+
+    instance = ApplicationCommunicator(app, {"type": "test"})
+    _ = instance.future
+    await instance.wait(timeout=0.05)
+    assert instance.future.done()
+
+
+@pytest.mark.asyncio
+async def test_wait_with_cancelled_future():
+    async def app(scope, receive, send):
+        await asyncio.sleep(100)
+
+    instance = ApplicationCommunicator(app, {"type": "test"})
+    fut = instance.future
+    fut.cancel()
+    # Awaiting the already-cancelled future raises CancelledError inside wait,
+    # which is swallowed.
+    await instance.wait(timeout=1)
 
 
 @pytest.mark.asyncio

@@ -1,3 +1,4 @@
+# NEWLY ADDED
 import asyncio
 
 import pytest
@@ -62,6 +63,15 @@ async def test_deprecated_loop_parameter():
     loop = asyncio.get_running_loop()
     with pytest.warns(DeprecationWarning):
         timeout(1.0, loop=loop)
+
+
+@pytest.mark.asyncio
+async def test_cancel_task_noop_when_no_task():
+    t = timeout(1.0)
+    t._task = None
+    # With no task captured, _cancel_task is a no-op and does not mark expired
+    t._cancel_task()
+    assert t.expired is False
 
 
 @pytest.mark.asyncio

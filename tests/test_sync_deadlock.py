@@ -1,3 +1,4 @@
+# NEWLY ADDED
 """thread_sensitive=True uses a single-thread executor, so two blocking
 sync_to_async calls that depend on each other will deadlock. This test
 asserts that the deadlock occurs (as a timeout), documenting the limitation."""

@@ -1,3 +1,4 @@
+# NEWLY ADDED
 from asgiref.compatibility import guarantee_single_callable, is_double_callable
 
 
@@ -42,3 +43,12 @@ def test_guarantee_single_callable_wraps_double():
 
     result = guarantee_single_callable(app)
     assert result is not app
+
+
+def test_non_callable_object():
+    # An object with no __call__ skips the inner coroutine check and is
+    # treated as double-callable.
+    class NoCall:
+        pass
+
+    assert is_double_callable(NoCall()) is True
