@@ -134,7 +134,7 @@ class WsgiToAsgiInstance:
             "headers": headers,
         }
 
-    @sync_to_async
+    @sync_to_async(thread_sensitive=False)
     def run_wsgi_app(self, body):
         """
         Called in a subthread to run the WSGI app. We encapsulate like

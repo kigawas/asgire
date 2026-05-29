@@ -10,6 +10,7 @@ jobs:
   tests:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -25,7 +26,6 @@ jobs:
       - run: uv python install ${{ matrix.python-version }}
       - run: uv run --python ${{ matrix.python-version }} pytest --cov asgiref --cov-branch --cov-report=xml
       - uses: codecov/codecov-action@v5
-        if: matrix.python-version == '3.14'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - run: uv build
