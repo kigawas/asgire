@@ -1,5 +1,6 @@
 # NEWLY ADDED
 import asyncio
+import gc
 
 import pytest
 
@@ -130,3 +131,22 @@ async def test_del_cleanup():
     instance = ApplicationCommunicator(app, {"type": "test"})
     _ = instance.future
     del instance
+
+
+def test_del_with_closed_loop():
+    # __del__ cancels a pending future; if the loop is already closed the
+    # RuntimeError must be swallowed rather than surfacing during GC.
+    loop = asyncio.new_event_loop()
+
+    async def app(scope, receive, send):
+        await asyncio.sleep(100)
+
+    async def make():
+        inst = ApplicationCommunicator(app, {"type": "test"})
+        _ = inst.future
+        return inst
+
+    instance = loop.run_until_complete(make())
+    loop.close()
+    del instance
+    gc.collect()
