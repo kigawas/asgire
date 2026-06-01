@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.12.2
+
+- Speed up `sync_to_async(func)` construction for functions/methods by skipping a redundant `iscoroutinefunction` check (helps the inline `await sync_to_async(self.method)(...)` pattern)
+
 ## 3.12.1
 
 - Remove Python 3.9 related code completely

@@ -6,6 +6,7 @@ import inspect
 import os
 import sys
 import threading
+import types
 import warnings
 import weakref
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -35,6 +36,19 @@ if TYPE_CHECKING:
 _F = TypeVar("_F", bound=Callable[..., Any])
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
+
+# Callables whose coroutine-ness is fully determined by the object itself.
+# For these, the extra `__call__` check in sync_to_async's validation (which
+# only matters for class instances with an `async def __call__`) is redundant,
+# so it can be skipped. This avoids a second, costly inspect.iscoroutinefunction
+# call on the hot `await sync_to_async(self.method)(...)` path.
+_DIRECTLY_INTROSPECTABLE_CALLABLES = (
+    types.FunctionType,
+    types.MethodType,
+    types.BuiltinFunctionType,
+    types.BuiltinMethodType,
+    functools.partial,
+)
 
 
 def _restore_context(context: contextvars.Context) -> None:
@@ -407,7 +421,14 @@ class SyncToAsync(Generic[_P, _R]):
         executor: Optional["ThreadPoolExecutor"] = None,
         context: Optional[contextvars.Context] = None,
     ) -> None:
-        if not callable(func) or iscoroutinefunction(func) or iscoroutinefunction(getattr(func, "__call__", func)):
+        if (
+            not callable(func)
+            or iscoroutinefunction(func)
+            or (
+                not isinstance(func, _DIRECTLY_INTROSPECTABLE_CALLABLES)
+                and iscoroutinefunction(getattr(func, "__call__", func))
+            )
+        ):
             raise TypeError("sync_to_async can only be applied to sync functions.")
 
         functools.update_wrapper(self, func)
