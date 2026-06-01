@@ -16,3 +16,13 @@ def test_delattr_after_delete_raises():
     del local.foo
     with pytest.raises(AttributeError, match="no attribute"):
         del local.foo
+
+
+def test_delattr_thread_critical():
+    # Exercises the thread_critical=True branch of __delattr__.
+    local = Local(thread_critical=True)
+    local.foo = 1
+    assert local.foo == 1
+    del local.foo
+    with pytest.raises(AttributeError, match="no attribute"):
+        local.foo
