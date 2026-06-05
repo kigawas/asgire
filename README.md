@@ -41,6 +41,29 @@ The cost of `sync_to_async` / `async_to_sync` is paid per *boundary crossing* (a
 thread hop through the event loop, tens of microseconds), not per line — so the
 order below is roughly the order of impact.
 
+Django's `a`-prefixed methods (e.g. `aget`, `acreate`) also carry the implicit
+cost of calling `sync_to_async` on the ORM call, so they are not free. Each one
+is a boundary crossing. Consider implementing the DB logic in a sync function,
+then wrapping it once with `sync_to_async` (two crossings collapse into one,
+~2x faster for cheap queries):
+
+```python
+# Slower — every a* method is its own sync_to_async crossing
+async def log_login(user_id: int):
+    user = await User.objects.aget(id=user_id)
+    await AuthLog.objects.acreate(user=user, action="logged in")
+
+# Faster — implement the logic in sync, then wrap it once
+@sync_to_async
+def log_login(user_id: int):
+    user = User.objects.get(id=user_id)
+    AuthLog.objects.create(user=user, action="logged in")
+```
+
+The sync body cannot `await`, so this applies when the block is pure sync work —
+and as a bonus, `transaction.atomic` works naturally inside it, which it does
+not across `await` boundaries.
+
 ### Minimize boundary crossings
 
 Cross as few times as possible. The biggest wins come from restructuring, not
