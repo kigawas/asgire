@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `AsyncToSync` now resolves the event loop at call time instead of capturing it at construction, syncing upstream [asgiref#562](https://github.com/django/asgiref/issues/562). A wrapper built while a loop is running no longer binds to that loop, so it cannot deadlock on it later (e.g. pytest-asyncio stopping the loop between tests); the stopped-loop guard from 3.12.0 is kept for the parent-loop (threadlocal) path, which upstream does not guard
+
 ## 3.12.2
 
 - Speed up `Local` attribute access ~3x by removing per-access context-manager overhead

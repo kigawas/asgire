@@ -1,5 +1,6 @@
 # NEWLY ADDED
 import asyncio
+import os
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -40,8 +41,9 @@ def test_async_to_sync_propagates_coroutine_exception():
 
 
 def test_async_to_sync_falls_back_when_main_loop_closes_mid_dispatch():
-    # Simulates the captured main event loop closing between the is_running()
-    # check and call_soon_threadsafe: AsyncToSync must fall back to a new loop.
+    # Simulates the parent event loop (found via the SyncToAsync threadlocal)
+    # closing between the is_running() check and call_soon_threadsafe:
+    # AsyncToSync must fall back to a new loop.
     class FakeLoop:
         def is_running(self):
             return True
@@ -55,9 +57,13 @@ def test_async_to_sync_falls_back_when_main_loop_closes_mid_dispatch():
     async def coro():
         return "ok"
 
-    func = AsyncToSync(coro)
-    func.main_event_loop = FakeLoop()
-    assert func() == "ok"
+    SyncToAsync.threadlocal.main_event_loop = FakeLoop()
+    SyncToAsync.threadlocal.main_event_loop_pid = os.getpid()
+    try:
+        assert AsyncToSync(coro)() == "ok"
+    finally:
+        del SyncToAsync.threadlocal.main_event_loop
+        del SyncToAsync.threadlocal.main_event_loop_pid
 
 
 @pytest.mark.asyncio
