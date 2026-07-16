@@ -40,7 +40,7 @@ def test_async_to_sync_does_not_hang_when_threadlocal_loop_is_stopped() -> None:
         raise AssertionError(
             f"async_to_sync blocked for {elapsed:.1f}s waiting on a "
             "stopped main_event_loop captured via SyncToAsync.threadlocal "
-            "— regression of #525"
+            "— regression of django/asgiref#525"
         )
 
     if state["error"] is not None:

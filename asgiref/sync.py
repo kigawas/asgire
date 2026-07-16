@@ -208,24 +208,23 @@ class AsyncToSync(Generic[_P, _R]):
         except AttributeError:
             pass
         self.force_new_loop = force_new_loop
-        self.main_event_loop = None
-        try:
-            self.main_event_loop = asyncio.get_running_loop()
-        except RuntimeError:
-            # There's no event loop in this thread.
-            pass
 
     def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _R:
         __traceback_hide__ = True  # noqa: F841
 
-        if not self.force_new_loop and not self.main_event_loop:
-            # There's no event loop in this thread. Look for the threadlocal if
-            # we're inside SyncToAsync
+        # The loop is resolved at call time, not at construction: a wrapper may
+        # outlive the loop that was running when it was built
+        # (django/asgiref#562). If we're
+        # inside a SyncToAsync worker thread, its threadlocal points back to the
+        # parent event loop.
+        main_event_loop = None
+        if not self.force_new_loop:
             main_event_loop_pid = getattr(SyncToAsync.threadlocal, "main_event_loop_pid", None)
             # We make sure the parent loop is from the same process - if
-            # they've forked, this is not going to be valid any more (#194)
+            # they've forked, this is not going to be valid any more
+            # (django/asgiref#194)
             if main_event_loop_pid and main_event_loop_pid == os.getpid():
-                self.main_event_loop = getattr(SyncToAsync.threadlocal, "main_event_loop", None)
+                main_event_loop = getattr(SyncToAsync.threadlocal, "main_event_loop", None)
 
         # You can't call AsyncToSync from a thread with a running event loop
         try:
@@ -281,9 +280,13 @@ class AsyncToSync(Generic[_P, _R]):
                 finally:
                     del self.loop_thread_executors[loop]
 
-            if self.main_event_loop is not None and self.main_event_loop.is_running():
+            # is_running() guards against a stale threadlocal loop that has
+            # since stopped: call_soon_threadsafe on it would succeed but the
+            # callback would never run, parking this thread forever
+            # (django/asgiref#525).
+            if main_event_loop is not None and main_event_loop.is_running():
                 try:
-                    self.main_event_loop.call_soon_threadsafe(self.main_event_loop.create_task, awaitable)
+                    main_event_loop.call_soon_threadsafe(main_event_loop.create_task, awaitable)
                 except RuntimeError:
                     running_in_main_event_loop = False
                 else:
