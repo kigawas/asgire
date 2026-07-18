@@ -29,6 +29,9 @@ def test_async_to_sync_does_not_hang_when_threadlocal_loop_is_stopped() -> None:
         except BaseException as exc:
             state["error"] = exc
         finally:
+            # The stale loop must stay open during the call (the scenario is
+            # stopped-but-not-closed), but not leak beyond the test.
+            stale_loop.close()
             barrier.set()
 
     thread = threading.Thread(target=_worker, name="stale-loop-worker", daemon=True)
