@@ -30,6 +30,24 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
       - run: uv build
 
+  # No coverage upload here: codecov merges after_n_builds uploads from the
+  # main matrix, and the free-threaded runs would not change line coverage.
+  tests-freethreaded:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.13t"
+          - "3.14t"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - run: uv python install ${{ matrix.python-version }}
+      - run: uv run --python ${{ matrix.python-version }} pytest
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

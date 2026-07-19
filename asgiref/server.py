@@ -56,9 +56,11 @@ class StatelessServer:
         """
         Runs the asyncio event loop with our handler loop.
         """
-        event_loop = asyncio.get_event_loop()
         try:
-            event_loop.run_until_complete(self.arun())
+            # asyncio.get_event_loop() no longer creates a loop on Python 3.14
+            # if none exists, so manage one via asyncio.run()
+            # (django/asgiref#559).
+            asyncio.run(self.arun())
         except KeyboardInterrupt:
             logger.info("Exiting due to Ctrl-C/interrupt")
 
