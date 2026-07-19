@@ -7,7 +7,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from asgiref.sync import AsyncToSync, SyncToAsync, async_to_sync, sync_to_async
+from asgiref.sync import (
+    AsyncToSync,
+    SyncToAsync,
+    ThreadSensitiveContext,
+    async_to_sync,
+    sync_to_async,
+)
 
 
 def test_async_to_sync_decorator_form():
@@ -91,6 +97,48 @@ async def test_sync_to_async_deadlock_guard():
             await sync_to_async(lambda: None)()
     finally:
         SyncToAsync.deadlock_context.set(False)
+
+
+@pytest.mark.asyncio
+async def test_thread_sensitive_context_exit_cancelled_while_joining():
+    # Covers ThreadSensitiveContext.__aexit__'s InvalidStateError branch:
+    # cancelling the task that is awaiting the executor join leaves the join
+    # thread to finish later, and its set_result() then finds the future
+    # already cancelled.
+    started = threading.Event()
+    release = threading.Event()
+    about_to_exit = asyncio.Event()
+    work = {}
+
+    def blocking():
+        started.set()
+        release.wait(5)
+
+    async def scope():
+        async with ThreadSensitiveContext():
+            work["task"] = asyncio.create_task(sync_to_async(blocking)())
+            while not started.is_set():
+                await asyncio.sleep(0.01)
+            about_to_exit.set()
+
+    threads_before = set(threading.enumerate())
+    scope_task = asyncio.create_task(scope())
+    # Event.set() wakes this waiter via call_soon, so by the time wait()
+    # returns, scope_task has already run through __aexit__'s synchronous
+    # prefix (spawning the join thread) and parked at its await.
+    await about_to_exit.wait()
+    scope_task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await scope_task
+
+    # Unblock the worker: the join thread completes the shutdown and hits
+    # set_result on the already-cancelled future. Both threads exiting means
+    # that set_result call has happened.
+    release.set()
+    new_threads = set(threading.enumerate()) - threads_before
+    while any(thread.is_alive() for thread in new_threads):
+        await asyncio.sleep(0.01)
+    await work["task"]
 
 
 @pytest.mark.asyncio
