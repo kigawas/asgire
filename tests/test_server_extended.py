@@ -45,14 +45,9 @@ def test_run_handles_keyboard_interrupt():
             pass
 
     server = KbServer(lambda scope: None)
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    try:
-        # run() should catch the KeyboardInterrupt and return without raising
-        server.run()
-    finally:
-        asyncio.set_event_loop(None)
-        loop.close()
+    # run() manages its own event loop and should catch the KeyboardInterrupt
+    # and return without raising
+    server.run()
 
 
 @pytest.mark.asyncio

@@ -27,7 +27,7 @@ from typing import (
 )
 
 from .current_thread_executor import CurrentThreadExecutor
-from .local import Local
+from .local import Local, _rehome, _Storage
 
 if TYPE_CHECKING:
     # This is not available to import at runtime
@@ -56,6 +56,12 @@ def _restore_context(context: contextvars.Context) -> None:
     # context for downstream consumers
     for cvar in context:
         cvalue = context.get(cvar)
+        # asgiref is deliberately moving this context onto the current thread,
+        # so re-home any Local storage to it. This keeps Local data visible
+        # across async_to_sync / sync_to_async boundaries while leaving data
+        # merely inherited by an unrelated thread isolated (see asgiref.local).
+        if isinstance(cvalue, _Storage):
+            cvalue = _rehome(cvalue)
         try:
             if cvar.get() != cvalue:
                 cvar.set(cvalue)
@@ -500,8 +506,21 @@ class SyncToAsync(Generic[_P, _R]):
             executor = self._executor
 
         context = contextvars.copy_context() if self.context is None else self.context
+        # ``child`` is the deferred sync function to be run, with its args
+        # and kwargs bound.
         child = functools.partial(self.func, *args, **kwargs)
-        func = context.run
+
+        # On the worker thread, thread_handler runs ``func(child)``. ``func``
+        # enters ``context`` (via context.run); then, inside it, ``run_child``
+        # re-homes any Local storage to the worker thread so it stays visible
+        # there (see _restore_context), and finally calls ``child``.
+        def func(child: Callable[[], _R]) -> _R:
+            def run_child() -> _R:
+                _restore_context(context)
+                return child()
+
+            return context.run(run_child)
+
         task_context: List[asyncio.Task[Any]] = []
 
         # Run the code in the right thread
