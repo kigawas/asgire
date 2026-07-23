@@ -1,7 +1,5 @@
 [project]
-authors = [
-  {name = "Weiliang Li", email = "to.be.impressive@gmail.com"},
-]
+authors = [{ name = "Weiliang Li", email = "to.be.impressive@gmail.com" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Web Environment",
@@ -15,9 +13,7 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Free Threading :: 2 - Beta",
 ]
-dependencies = [
-  "typing_extensions>=4; python_version < '3.11'",
-]
+dependencies = ["typing_extensions>=4; python_version < '3.11'"]
 description = "The revamped and modernized drop-in replacement for asgiref"
 license = "BSD-3-Clause"
 name = "asgire"
@@ -33,11 +29,11 @@ Repository = "https://github.com/kigawas/asgire"
 
 [dependency-groups]
 dev = [
-  "pytest>=9.0.3",
+  "pytest>=9.1.1",
   "pytest-asyncio>=1.4.0",
   "pytest-cov>=7.1.0",
-  "ruff>=0.15.15",
-  "ty>=0.0.41",
+  "ruff>=0.16.0",
+  "ty>=0.0.63",
 ]
 
 [build-system]
@@ -60,6 +56,7 @@ exclude = ["tests/"]
 
 [tool.ruff]
 line-length = 119
+extend-exclude = ["README.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
