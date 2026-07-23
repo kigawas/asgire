@@ -27,7 +27,7 @@ from typing import (
 )
 
 from .current_thread_executor import CurrentThreadExecutor
-from .local import Local, _rehome, _Storage
+from .local import _CVAR_NAME, Local, _rehome
 
 if TYPE_CHECKING:
     # This is not available to import at runtime
@@ -60,7 +60,9 @@ def _restore_context(context: contextvars.Context) -> None:
         # so re-home any Local storage to it. This keeps Local data visible
         # across async_to_sync / sync_to_async boundaries while leaving data
         # merely inherited by an unrelated thread isolated (see asgiref.local).
-        if isinstance(cvalue, _Storage):
+        # The type check guards against a foreign cvar that happens to share
+        # the name.
+        if cvar.name == _CVAR_NAME and type(cvalue) is tuple:
             cvalue = _rehome(cvalue)
         try:
             if cvar.get() != cvalue:

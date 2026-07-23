@@ -7,6 +7,7 @@
 - Fix `StatelessServer.run()` failing on Python 3.14, where `asyncio.get_event_loop()` no longer creates an event loop if none exists; it now uses `asyncio.run()`, syncing upstream [asgiref#559](https://github.com/django/asgiref/issues/559)
 - Fix `Local` leaking data between unrelated sync threads when `sys.flags.thread_inherit_context` is enabled (Python 3.14+, default on free-threaded builds): storage is now tagged with its owning thread and re-homed only when asgiref intentionally moves work across threads, syncing upstream asgiref 3.12.0
 - Run CI against the free-threaded builds of Python 3.13 and 3.14
+- Speed up `Local` attribute access well beyond the pre-tagging baseline: the thread tag is a plain inline-built tuple instead of a class instance, the per-access lock is gone (contextvar storage is thread-confined, so there is no shared mutable state to guard), and storage access is flattened into `Local`'s own accessors instead of dispatching through an inner object
 
 ## 3.12.2
 
