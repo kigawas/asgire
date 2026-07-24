@@ -1,14 +1,14 @@
 # NEWLY ADDED
 import threading
+from concurrent.futures import Future
 
 import pytest
 
-from asgiref.current_thread_executor import CurrentThreadExecutor
+from asgiref.current_thread_executor import CurrentThreadExecutor, _WorkItem
 
 
 def test_run_until_future_wrong_thread():
     executor = CurrentThreadExecutor(None)
-    from concurrent.futures import Future
 
     f = Future()
 
@@ -43,9 +43,6 @@ def test_submit_to_broken_executor_chain():
 
 
 def test_work_item_exception():
-    from concurrent.futures import Future
-
-    from asgiref.current_thread_executor import _WorkItem
 
     f = Future()
     item = _WorkItem(f, lambda: 1 / 0)
@@ -55,9 +52,6 @@ def test_work_item_exception():
 
 
 def test_work_item_cancelled():
-    from concurrent.futures import Future
-
-    from asgiref.current_thread_executor import _WorkItem
 
     f = Future()
     f.cancel()

@@ -59,4 +59,4 @@ line-length = 119
 extend-exclude = ["README.md"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
+select = ["E", "F", "I", "W", "PLC0415"]
