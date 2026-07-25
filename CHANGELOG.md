@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 3.13.0
 
-- `AsyncToSync` now resolves the event loop at call time instead of capturing it at construction, syncing upstream [asgiref#562](https://github.com/django/asgiref/issues/562). A wrapper built while a loop is running no longer binds to that loop, so it cannot deadlock on it later (e.g. pytest-asyncio stopping the loop between tests); the stopped-loop guard from 3.12.0 is kept for the parent-loop (threadlocal) path, which upstream does not guard
+- `AsyncToSync` now resolves the event loop at call time instead of capturing it at construction, syncing upstream [asgiref#562](https://github.com/django/asgiref/issues/562). A wrapper built while a loop is running no longer binds to that loop, so it cannot deadlock on it later (e.g. pytest-asyncio stopping the loop between tests); the stopped-loop guard from previous version is kept for the parent-loop (threadlocal) path, which upstream does not guard
 - Fix an event loop deadlock when exiting `ThreadSensitiveContext` while its executor thread was still blocked waiting on the event loop, syncing upstream [asgiref#535](https://github.com/django/asgiref/issues/535). The executor is now joined in a dedicated thread rather than blocking the loop (or starving its default executor)
 - Fix `StatelessServer.run()` failing on Python 3.14, where `asyncio.get_event_loop()` no longer creates an event loop if none exists; it now uses `asyncio.run()`, syncing upstream [asgiref#559](https://github.com/django/asgiref/issues/559)
 - Fix `Local` leaking data between unrelated sync threads when `sys.flags.thread_inherit_context` is enabled (Python 3.14+, default on free-threaded builds): storage is now tagged with its owning thread and re-homed only when asgiref intentionally moves work across threads, syncing upstream [asgiref#564](https://github.com/django/asgiref/pull/564)
