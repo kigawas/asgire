@@ -377,6 +377,7 @@ class AsyncToSync(Generic[_P, _R]):
         if current_task is not None and task_context is not None:
             task_context.append(current_task)
 
+        exception: Optional[BaseException] = None
         try:
             # If we have an exception, run the function inside the except block
             # after raising it so exc_info is correctly populated.
@@ -388,13 +389,21 @@ class AsyncToSync(Generic[_P, _R]):
             else:
                 result = await awaitable
         except BaseException as e:
-            call_result.set_exception(e)
+            exception = e
+
+        if current_task is not None and task_context is not None:
+            task_context.remove(current_task)
+
+        # The context must be captured strictly before call_result resolves:
+        # resolving wakes the sync thread parked in __call__, which reads
+        # context[0] immediately - capturing after would race with that read
+        # and lose the awaitable's context changes.
+        context[0] = contextvars.copy_context()
+
+        if exception is not None:
+            call_result.set_exception(exception)
         else:
             call_result.set_result(result)
-        finally:
-            if current_task is not None and task_context is not None:
-                task_context.remove(current_task)
-            context[0] = contextvars.copy_context()
 
 
 class SyncToAsync(Generic[_P, _R]):

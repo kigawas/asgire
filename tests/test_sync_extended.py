@@ -3,10 +3,14 @@ import asyncio
 import os
 import sys
 import threading
+import time
+from concurrent.futures import Future as _Future
 from concurrent.futures import ThreadPoolExecutor
+from unittest import mock
 
 import pytest
 
+from asgiref.local import Local
 from asgiref.sync import (
     AsyncToSync,
     SyncToAsync,
@@ -100,6 +104,35 @@ async def test_sync_to_async_deadlock_guard():
 
 
 @pytest.mark.asyncio
+async def test_async_to_sync_captures_context_before_resolving():
+    # Regression test for a lost-update race: main_wrap must capture the
+    # finished context into context[0] BEFORE resolving call_result, because
+    # resolving wakes the sync thread parked in __call__, which reads
+    # context[0] immediately. A Future that dawdles on the event loop thread
+    # after resolving makes the stale read deterministic on unfixed code; on
+    # fixed code it only adds latency.
+
+    class SlowResolveFuture(_Future):
+        def set_result(self, result):
+            super().set_result(result)
+            time.sleep(0.01)
+
+    local = Local()
+    local.value = "outer"
+
+    async def inner():
+        local.value = "inner"
+
+    def sync_code():
+        with mock.patch("asgiref.sync.Future", SlowResolveFuture):
+            async_to_sync(inner)()
+        return local.value
+
+    assert await sync_to_async(sync_code)() == "inner"
+    assert local.value == "inner"
+
+
+@pytest.mark.asyncio
 async def test_thread_sensitive_context_exit_cancelled_while_joining():
     # Covers ThreadSensitiveContext.__aexit__'s InvalidStateError branch:
     # cancelling the task that is awaiting the executor join leaves the join
@@ -170,7 +203,6 @@ async def test_sync_to_async_preserves_exc_info():
 
 @pytest.mark.asyncio
 async def test_sync_to_async_with_executor():
-    from concurrent.futures import ThreadPoolExecutor
 
     executor = ThreadPoolExecutor(max_workers=1)
 
